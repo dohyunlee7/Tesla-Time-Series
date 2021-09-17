@@ -1,0 +1,156 @@
+---
+title: "An Analysis of Tesla's Market Value Over Time"
+author: "Dohyun Lee"
+date: "January 16th, 2021"
+geometry: margin=1in
+output:
+  pdf_document:
+    dev: cairo_pdf
+    highlight: pygments
+  word_document: default
+fontsize: 11pt
+header-includes:
+  - \setlength{\parindent}{3em}
+  - \setlength{\parskip}{0em}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tinytex)
+library(ggplot2)
+library(dplyr)
+library(tidymodels)
+library(sysfonts)
+library(tinytex)
+font_add_google("Source Sans Pro")
+```
+
+   Founded in 2003 by Martin Eberhard and Marc Tarpenning, Tesla has been a hot subject of discussion for the past decade because of their sustainable approach to energy as the climate situation around the globe worsens every day. For this project, I wanted to go more in depth with the data itself and analyze the stock prices of Tesla over time and why they were the way they were -- especially, the incredible heights they have reached in 2020 since the start of the COVID-19 pandemic and its breakthrough price surge in mid-2013.
+   
+   
+   To collect the data, I went on investing.com and searched for Tesla's historical data and downloaded a dataset that ranged from June 30th, 2010 to January 15th, 2021, containing the average, lowest, highest, and opening prices, and the daily change rate and volume, or number of shares traded, of that day.^[https://www.investing.com/equities/tesla-motors-historical-data]
+   
+```{r load_data}
+
+#load data
+tesla <- read.csv("TSLA Historical Data-2.csv")
+
+#change Date from type factor to date
+tesla$Date = as.Date(tesla$Date)
+
+#filter dataset for just 2020 data points
+tesla2020 = filter(tesla, Date >= "2020-01-01" & Date <= "2020-12-31")
+```
+   
+```{r figure1}
+ggplot(tesla2020, aes(x = Date, y = Price, ymin = Low, ymax = High)) +
+   geom_line(color="seagreen4") +
+   stat_smooth(method = "loess", size = 0.5, color = "purple") +
+   geom_ribbon(alpha = 0.4, fill = "seagreen2") +
+   scale_x_date(date_labels = "%b\n%Y", date_breaks = "months") +
+   labs(title = "Daily Average Tesla Stock Price",
+        subtitle = "Smoothed Estimate for 2020",
+        caption = "Figure 1") +
+   scale_y_continuous(labels=scales::dollar_format()) +
+   geom_vline(xintercept = as.Date("2020-03-11")) +
+   annotate("text", x = as.Date("2020-03-11") + 70, y = 500, size = 2.5, 
+           label = "March 11th, 2020\nCOVID-19 announced as pandemic", col = "black") +
+   theme(axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         panel.background = element_rect(fill = "ivory"),
+         text = element_text(family = "Source Sans Pro Regular", size = 10))
+```
+
+\noindent As shown in Figure 1 above, I created a time series from the first day of 2020 to the last with a smoothed LOESS model fitted on the fluctuating curve in purple to show an estimated trend line. You can also see that the light green highlights wrapping the time series represents the lows and highs. Until mid-summer, Tesla's stock price was actually steady and did not reach higher than \$250 per stock. However, prices hit a steep increase in mid-August, reaching around \$500 at the start of September. They dropped around $200 and then hit another drastic spike during the holiday season in mid-November, with prices consistently increasing until the New Year. According to an article from NASDAQ, Tesla shares in August went up as much as 74.2%, closing out the month at \$498.32 due to the company splitting its stock five for one. In other words, a pre-split Tesla share would have been \$2.491.60, but by making the share more affordable and increasing the number of shares available attracted more investors, Tesla appreciated their stock by nearly 500% since the start of the year to the end of August.^[https://www.nasdaq.com/articles/why-tesla-shares-skyrocketed-in-august-2020-09-06] Despite this surge, however, Tesla had a hiccup the following month. 
+
+```{r figure2}
+#filter from sep 1, 2020 to sep 15, 2020
+tesla2020_sep= filter(tesla, Date >= "2020-09-01" & Date <= "2020-09-15")
+head(tesla2020_sep)
+
+ggplot(tesla2020_sep, aes(x = Date, y = Price, ymin = Low, ymax = High)) +
+   geom_line(color="seagreen4") +
+   stat_smooth(method = "loess", size = 0.5, color = "purple", se = FALSE) +
+   scale_x_date(date_labels = "%b\n%d", breaks = "days") +
+   labs(title = "Daily Average Tesla Stock Price",
+        subtitle = "Smoothed Estimate for Sep 1st-Sep 15th, 2020",
+        caption = "Figure 2") +
+   scale_y_continuous(labels=scales::dollar_format()) +
+   theme(axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         panel.background = element_rect(fill = "ivory"),
+         text = element_text(family = "Source Sans Pro Regular", size = 10))
+```
+
+As shown in Figure 2 and the data table under the "Change" variable above , Tesla suffered its worst trading day on September 8th, 2020 since debuting on the market in 2010 -- their shares lost 21.06% of their value. Prior to September 8th, S&P had actually declined to add Tesla to their list of 500 major US stocks because of its somewhat new profitability, which put investors off, leading to the depreciation in value.^[https://www.cnn.com/2020/09/08/investing/tesla-stock-plunge/index.html] Despite the 21.06% decline, Tesla shares had still nearly quadrupled in value up until this point, going up to a 295% increase.
+
+```{r figure3}
+#filter from nov 1, 2020 to dec 31, 2020
+tesla2020_nov_dec = filter(tesla, Date >= "2020-11-01" & Date <= "2020-12-31")
+
+ggplot(tesla2020_nov_dec, aes(x = Date, y = Price, ymin = Low, ymax = High)) +
+   geom_line(color="seagreen4") +
+   stat_smooth(method = "loess", size = 0.5, color = "purple", se = FALSE) +
+   scale_x_date(date_labels = "%b\n%d", breaks = "months") +
+   labs(title = "Daily Average Tesla Stock Price",
+        subtitle = "Smoothed Estimate for Nov - Dec 2020",
+        caption = "Figure 3") +
+   scale_y_continuous(labels=scales::dollar_format()) +
+   theme(axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         panel.background = element_rect(fill = "ivory"),
+         text = element_text(family = "Source Sans Pro Regular", size = 10))
+```
+
+
+During the entire month of November, Tesla shares increased by 41.7%. After being rejected in September, the S&P had announced on November 16th that they were going to add Tesla to the S&P 500 as a major index, and evident by Figure 3, you can see that in mid-November, stock price spiked and gave them a bigger push and momentum in terms of pricing -- investors who buy mutual funds or exchange-traded funds that track the S&P 500 index will also be buying Tesla shares.^[https://www.fool.com/investing/2020/12/02/why-tesla-stock-soared-463-in-november/] Tesla was officially added to the S&P on December 21st; as a result, shares increased by another 20.7% for the entire month of December. Another reason for the increase in value is Tesla's solid vehicle deliveries. They reported by the end of the year that they sold 499,550 vehicles in 2020, exceeding market expectations.^[https://www.fool.com/investing/2021/01/04/why-tesla-stock-climbed-243-in-december/]Additionally, achieving these numbers could not have been easy due to the drop in car sales caused by the economic hardships of COVID-19.
+
+   Now let's go back in time a bit to analyze the first five years of Tesla's shares history.
+   
+```{r figure4}
+##filter from jun 1, 2010 to jan 01, 2016
+tesla5years = filter(tesla, Date >= "2010-06-30" & Date <= "2016-01-01")
+
+ggplot(tesla5years, aes(x = Date, y = Price, ymin = Low, ymax = High)) +
+   geom_line(color="navy") +
+   geom_ribbon(alpha = 0.4, fill = "darkorchid1") +
+   stat_smooth(method = "loess", size = 0.5, color = "orange") +
+   scale_x_date(date_labels = "%Y", breaks = "years") +
+   labs(title = "Daily Average Tesla Stock Price",
+        subtitle = "Smoothed Estimate for 2011-2016",
+        caption = "Figure 4") +
+   scale_y_continuous(labels=scales::dollar_format()) +
+   theme(axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         panel.background = element_rect(fill = "ivory"),
+         text = element_text(family = "Source Sans Pro Regular", size = 10))
+```   
+   
+\noindent As displayed in Figure 4 above, the time series starts on January 1st, 2011 and ends on January 1st, 2016. From when Tesla went public on the market on June 30th, 2010 to the first half of 2013, share prices were very low, although they did show an extremely gradual increase from around \$3.00 to \$10.00. Then somewhere in mid-2013, Tesla's market value shot up and then kept increasing from there -- let's look at this portion of the time series closer.
+
+```{r figure5}
+#filter from jan 1, 2013 to jun 1, 2013
+tesla2013 = filter(tesla, Date >= "2013-01-01" & Date <= "2013-06-01")
+
+ggplot(tesla2013, aes(x = Date, y = Price, ymin = Low, ymax = High)) +
+geom_line(color="navy") +
+geom_ribbon(alpha = 0.4, fill = "darkorchid1") +
+stat_smooth(method = "loess", size = 0.5, color = "orange") +
+scale_x_date(date_labels = "%b", breaks = "months") +
+labs(title = "Daily Average Tesla Stock Price",
+     subtitle = "Smoothed Estimate for Jan-June 2013",
+     caption = "Figure 5") +
+scale_y_continuous(labels=scales::dollar_format()) +
+theme(axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.background = element_rect(fill = "ivory"),
+      text = element_text(family = "Source Sans Pro Regular", size = 10))
+```   
+
+\indent Displayed in Figure 5 above shows prices from January 2013 to June 2013. Before, you had to pay \$70,000 to \$100,000 for the Model S and this was during a time when many people were still skeptical about electric powered cars. However, in April 2013, Tesla announced a new financing plan for those interested in the Model S. Under this new plan, buyers were able to purchase the car without making huge down payments, and like a lease they were able to sell the car back for some guaranteed amount after three years. US Bank and Wells Fargo had agreed to finance 90% of the purchase price of the Model S, with the consumer paying the 10% down payment.^[https://money.cnn.com/2013/04/02/autos/tesla-financing-announcement/index.html] In addition to Elon Musk's captivating financing model, the Model S had received a score of 99 out of 100 on Consumer Reports calling it "the best car it has ever tested" in May 2013^[https://money.cnn.com/2013/05/09/autos/tesla-model-s-consumer-reports/index.html], which definitely contributed to the 212% increase in shares (from the start of the year to May 25th).
+
+   Ever since Tesla made its name all over the world with the revolutionary Model S, their value in the stock market has kept rising and reached unbelievable heights this past year despite the ongoing health and economic crisis. Since stocks are so volatile, it is difficult to predict whether or not Tesla will be able to keep up the run they have enjoyed these past five years. However, there is a very good chance that this value will keep rising which will depend heavily on President Biden's environmental reform plan, which includes the acceleration of the development of carbon capture sequestration technology to significantly reduce carbon dioxide emissions, and the US's potential to lead the global transition to sustainable, clean energy within the next half-decade or decade.
+
+
+I think I should get an Excellent. I've included all necessary code for recreation, I think I've provided a decent analysis on my data pitched to the appropriate audience that also meets the required word count. I think I've met minimum submission quality for graphics too. I also chose a dataset outside from labs.
